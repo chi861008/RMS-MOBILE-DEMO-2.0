@@ -1,0 +1,1175 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap">
+<title>門市營收一覽表 改版示範</title>
+<style>
+html, body { margin: 0; min-height: 100%; background: #ecebe8; font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif; color: #2b2b2b; }
+#stage { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 72px; padding: 32px; box-sizing: border-box; }
+#side { width: 360px; }
+#side .kicker { font-size: 15px; color: #8a5a1c; font-weight: 500; }
+#side h1 { margin: 8px 0 12px; font-size: 32px; line-height: 1.3; }
+#side p { margin: 0 0 20px; font-size: 15px; line-height: 1.7; color: #4a4a4a; }
+#side h2 { margin: 24px 0 10px; font-size: 14px; color: #5f5f5f; font-weight: 500; }
+#jumps { display: flex; flex-wrap: wrap; gap: 8px; }
+#jumps button, #side a.btn { height: 40px; padding: 0 14px; border: 1px solid #cfcfcf; border-radius: 4px; background: #fff; font: inherit; font-size: 14px; color: #333; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+#side a.btn { background: #c94a26; border-color: #c94a26; color: #fff; font-weight: 700; }
+#side .note { margin-top: 20px; font-size: 12px; color: #6b6b6b; }
+#phoneWrap { flex: none; }
+#phone { width: 390px; height: 844px; border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 10px #1e1e1e, 0 24px 60px rgba(0,0,0,0.28); background: #fff; position: relative; transform-origin: top left; }
+@media (max-width: 860px) {
+  #stage { padding: 0; display: block; }
+  #side { display: none; }
+  #phone { border-radius: 0; box-shadow: none; }
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="side">
+    <div class="kicker">專加科技 RMS · 手機版改版原型</div>
+    <h1>門市營收一覽表</h1>
+    <p>可直接點擊操作的互動原型：搜尋後條件收合並固定；圖表與表格共用同一列控制「[指標] [分組] [圖表｜表格]」；進階篩選（在結果中篩選）；點摘要修改條件。</p>
+    <a class="btn" href="demo.mp4" target="_blank" rel="noopener">觀看示範影片</a>
+    <h2>跳到指定畫面</h2>
+    <div id="jumps">
+      <button type="button" data-start="query">① 搜尋前</button>
+      <button type="button" data-start="result">② 圖表</button>
+      <button type="button" data-start="resultTable">③ 表格</button>
+      <button type="button" data-start="metric">④ 指標（單選）</button>
+      <button type="button" data-start="edit">⑤ 查詢範圍</button>
+      <button type="button" data-start="filter">⑥ 進階篩選</button>
+      <button type="button" data-start="dim">⑦ 分組方式</button>
+    </div>
+    <div class="note">＊畫面中的門市、商品與數字皆為示意資料。</div>
+  </div>
+  <div id="phoneWrap"><div id="phone"></div></div>
+</div>
+<template id="tpl">
+
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #ffffff; font-family: 'Noto Sans TC', system-ui, sans-serif; color: #222222">
+
+  <!-- 系統列 -->
+  <div style="flex: none; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px 0 16px; border-bottom: 1px solid #e6e6e6">
+    <span style="font-size: 16px; font-weight: 500; color: #333333">專加科技 - RMS</span>
+    <div style="display: flex; align-items: center; gap: 12px">
+      <button type="button" style="display: flex; align-items: center; gap: 4px; height: 44px; border: 0; background: none; padding: 0; font-family: inherit; font-size: 13px; color: #444444; cursor: pointer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg>個人設定
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 4px; height: 44px; border: 0; background: none; padding: 0; font-family: inherit; font-size: 13px; color: #444444; cursor: pointer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5"></path><path d="M10 8l-4 4 4 4M6 12h10"></path></svg>登出(28:39)
+      </button>
+    </div>
+  </div>
+
+  <!-- 標題列 -->
+  <div style="flex: none; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; background: #6b6b6b; color: #ffffff">
+    <button type="button" aria-label="返回" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; background: none; color: #ffffff; cursor: pointer">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+    </button>
+    <h1 style="margin: 0; display: flex; align-items: center; gap: 6px; font-size: 19px; font-weight: 500">門市營收一覽表
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>
+    </h1>
+    <button type="button" aria-label="說明訊息" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; background: none; color: #ffffff; cursor: pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="13" rx="2"></rect><path d="M8 10h8M8 14h5"></path></svg>
+    </button>
+  </div>
+
+  <!-- 捲動區 -->
+  <div ref="{{setScroller}}" style="flex: 1; min-height: 0; overflow-y: auto; position: relative">
+
+    <!-- 搜尋前：完整表單直接展開 -->
+    <sc-if value="{{showInlineForm}}" hint-placeholder-val="{{false}}">
+      <section aria-label="查詢條件" style="padding: 16px 16px 20px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #cfcfcf; border-radius: 4px; overflow: hidden">
+          <sc-for list="{{periodOpts}}" as="p" hint-placeholder-count="3">
+            <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="height: 44px; border: 0; font-family: inherit; font-size: 16px; color: #333333; cursor: pointer; {{p.css}}">{{p.label}}</button>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px">
+          <span style="width: 56px; flex: none; font-size: 15px; color: #555555">日期</span>
+          <sc-for list="{{dateOpts}}" as="o" hint-placeholder-count="2">
+            <button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="display: flex; align-items: center; gap: 8px; height: 44px; border: 0; background: none; padding: 0; font-family: inherit; font-size: 15px; cursor: pointer; color: {{o.color}}">
+              <span style="width: 18px; height: 18px; box-sizing: border-box; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid {{o.ring}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{o.dot}}"></span></span>
+              {{o.label}}
+            </button>
+          </sc-for>
+        </div>
+        <button type="button" onClick="{{openDate}}" style="display: flex; align-items: center; justify-content: space-between; width: 260px; height: 44px; border: 0; border-bottom: 1px solid #333333; background: none; padding: 0 2px; font-family: inherit; font-size: 16px; color: #222222; cursor: pointer">{{dDateText}}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c77a12" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+        </button>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span style="width: 64px; flex: none; font-size: 15px; color: #555555">集團名稱</span>
+          <button type="button" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 44px; border: 0; border-bottom: 1px solid #333333; background: none; padding: 0 2px; font-family: inherit; font-size: 15px; color: #222222; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">唯賀國際餐飲股份有限公司(NU)</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span style="width: 64px; flex: none; font-size: 15px; color: #555555">品牌名稱</span>
+          <button type="button" onClick="{{openBrand}}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 44px; border: 0; border-bottom: 1px solid #333333; background: none; padding: 0 2px; font-family: inherit; font-size: 15px; color: #222222; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; color: {{dBrandColor}}">{{dBrandText}}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span style="width: 64px; flex: none; font-size: 15px; color: #555555">門市篩選</span>
+          <button type="button" onClick="{{openStores}}" style="width: 200px; display: flex; align-items: center; gap: 8px; height: 44px; border: 0; border-bottom: 1px solid #333333; background: none; padding: 0 2px; font-family: inherit; font-size: 15px; color: #222222; text-align: left; cursor: pointer">
+            <span style="flex: 1">數量：{{dStoreCount}}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+          </button>
+        </div>
+
+        <button type="button" onClick="{{search}}" style="margin-top: 6px; height: 48px; border: 0; border-radius: 4px; background: #c94a26; font-family: inherit; font-size: 16px; font-weight: 700; color: #ffffff; cursor: pointer">搜尋</button>
+      </section>
+    </sc-if>
+
+    <!-- 搜尋後：條件摘要固定在頂端 -->
+    <sc-if value="{{showResults}}" hint-placeholder-val="{{true}}">
+      <button type="button" onClick="{{openQuery}}" aria-label="修改查詢範圍：{{dateText}}，{{brandText}}，門市 {{storeCount}} 間" style="position: sticky; top: 0; z-index: 5; width: 100%; height: 88px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; border: 0; border-bottom: 1px solid #dcdcdc; background: #ffffff; font-family: inherit; text-align: left; cursor: pointer">
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 12px">
+            <span style="color: #5f5f5f; font-weight: 500">查詢範圍</span>
+            <span style="padding: 1px 8px; border-radius: 10px; background: #ffe3c2; color: #7a3e00; font-weight: 500">{{periodLabel}}</span>
+            <span style="color: #5f5f5f">{{dateTypeLabel}}</span>
+          </span>
+          <span style="font-size: 17px; font-weight: 700; color: #222222; font-variant-numeric: tabular-nums">{{dateText}}</span>
+          <span style="font-size: 13px; color: #5f5f5f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{brandText}} · 門市 {{storeCount}} 間</span>
+        </span>
+        <span aria-hidden="true" style="flex: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f2f2f2; color: #555555">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"></path></svg>
+        </span>
+      </button>
+
+      <sc-if value="{{loading}}" hint-placeholder-val="{{false}}">
+        <div role="status" style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 16px 16px; color: #5f5f5f; font-size: 14px">
+          <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="14" fill="none" stroke="#e3e3e3" stroke-width="4"></circle><path d="M18 4a14 14 0 0 1 14 14" fill="none" stroke="#c94a26" stroke-width="4" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="0.8s" repeatCount="indefinite"></animateTransform></path></svg>
+          資料載入中…
+        </div>
+        <div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding: 8px 16px">
+          <div style="height: 120px; border-radius: 8px; background: #f0f0f0"></div>
+          <div style="height: 20px; width: 60%; border-radius: 4px; background: #f3f3f3"></div>
+          <div style="height: 20px; border-radius: 4px; background: #f3f3f3"></div>
+          <div style="height: 20px; border-radius: 4px; background: #f3f3f3"></div>
+          <div style="height: 20px; width: 80%; border-radius: 4px; background: #f3f3f3"></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ready}}" hint-placeholder-val="{{true}}">
+      <!-- 工具列＋篩選標籤（固定在摘要下方；只放不需重新搜尋的操作） -->
+      <div style="position: sticky; top: 88px; z-index: 4; background: #ffffff; border-bottom: 1px solid #e3e3e3; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06)">
+        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 16px">
+          <label style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; height: 44px; border-bottom: 1px solid #8a8a8a; color: #555555">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+            <input value="{{q}}" onChange="{{onQ}}" placeholder="過濾條件" aria-label="過濾門市" style="flex: 1; min-width: 0; border: 0; outline: none; background: none; font-family: inherit; font-size: 15px; color: #222222">
+          </label>
+          <button type="button" onClick="{{openFilter}}" style="flex: none; position: relative; height: 44px; display: flex; align-items: center; gap: 4px; padding: 0 10px; border: 0; border-radius: 22px; background: {{filterBg}}; font-family: inherit; font-size: 14px; color: #333333; cursor: pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6 7v6l-4 2v-8z"></path></svg>進階篩選
+            <sc-if value="{{filtered}}" hint-placeholder-val="{{false}}">
+              <span style="position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #c94a26"></span>
+            </sc-if>
+          </button>
+          <button type="button" aria-label="更多" onClick="{{openMore}}" style="flex: none; width: 44px; height: 44px; margin-right: -8px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 22px; background: none; color: #333333; cursor: pointer">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+          </button>
+        </div>
+        <sc-if value="{{hasChips}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 10px">
+            <sc-for list="{{chips}}" as="c" hint-placeholder-count="1">
+              <button type="button" onClick="{{c.clear}}" aria-label="移除條件 {{c.label}}" style="height: 36px; display: flex; align-items: center; gap: 6px; padding: 0 10px 0 12px; border: 1px solid #9fd3d6; border-radius: 18px; background: #eaf6f7; font-family: inherit; font-size: 13px; color: #145f64; cursor: pointer">{{c.label}}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{isChart}}" hint-placeholder-val="{{true}}">
+        <!-- 圖表模式：[指標（單選）] [分組] [圖表|表格] -->
+        <div style="display: flex; align-items: center; gap: 6px; padding: 10px 16px 8px">
+          <button type="button" onClick="{{openMetric}}" aria-label="指標：{{metricLabel}}，點選切換（共 28 項）" style="height: 36px; display: inline-flex; align-items: center; gap: 4px; padding: 0 8px 0 12px; border: 1px solid #26979d; border-radius: 18px; background: #f0f8f8; font-family: inherit; font-size: 15px; font-weight: 700; color: #145f64; cursor: pointer; white-space: nowrap">{{metricLabel}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+          <button type="button" onClick="{{openDim}}" aria-label="分組方式：{{dimLabel}}" style="height: 36px; display: inline-flex; align-items: center; gap: 4px; padding: 0 8px 0 12px; border: 1px solid #cfcfcf; border-radius: 18px; background: #ffffff; font-family: inherit; font-size: 15px; font-weight: 500; color: #222222; cursor: pointer; white-space: nowrap">依{{dimLabel}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+          <div role="tablist" aria-label="檢視方式" style="margin-left: auto; display: flex; border: 1px solid #cfcfcf; border-radius: 4px; overflow: hidden">
+            <sc-for list="{{viewOpts}}" as="v" hint-placeholder-count="2">
+              <button type="button" role="tab" aria-selected="{{v.pressed}}" onClick="{{v.pick}}" style="height: 36px; padding: 0 12px; border: 0; font-family: inherit; font-size: 14px; color: #333333; cursor: pointer; {{v.css}}">{{v.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <section aria-label="{{metricLabel}}{{rankTitle}}" style="margin: 0 16px 14px; border: 1px solid #e3e3e3; border-radius: 8px; padding: 10px 0 10px">
+          <div style="display: flex; align-items: center; gap: 2px; padding: 0 8px 0 16px">
+            <h3 style="flex: 1; margin: 0; font-size: 15px; font-weight: 700; color: #222222">{{metricLabel}}</h3>
+            <button type="button" aria-label="此圖表的更多操作" onClick="{{openChartMore}}" style="flex: none; width: 44px; height: 44px; margin-right: -8px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 22px; background: none; color: #444444; cursor: pointer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+            </button>
+          </div>
+          <div style="padding: 2px 16px 4px">
+            <div style="font-size: 12px; color: #5f5f5f">{{totalCaption}}</div>
+            <div style="font-size: 28px; line-height: 1.25; font-weight: 700; color: #222222; font-variant-numeric: tabular-nums">{{metricTotal}}</div>
+          </div>
+          <div style="margin: 6px 16px 2px; padding-top: 10px; border-top: 1px solid #eeeeee; font-size: 13px; color: #5f5f5f">{{rankTitle}}</div>
+          <sc-for list="{{rankRows}}" as="rr" hint-placeholder-count="6">
+            <div style="padding: 6px 16px">
+              <div style="display: flex; align-items: baseline; gap: 8px; font-size: 14px; color: #222222">
+                <span style="width: 18px; flex: none; color: #6b6b6b; font-variant-numeric: tabular-nums">{{rr.rank}}</span>
+                <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{rr.name}}</span>
+                <span style="font-weight: 700; font-variant-numeric: tabular-nums">{{rr.value}}</span>
+              </div>
+              <div style="margin: 5px 0 0 26px; height: 6px; border-radius: 3px; background: #edf1f1">
+                <div style="width: {{rr.pct}}%; height: 6px; border-radius: 3px; background: #2aa5a1"></div>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{noRows}}" hint-placeholder-val="{{false}}">
+            <p style="margin: 0; padding: 20px 14px 10px; text-align: center; font-size: 14px; color: #5f5f5f">沒有符合條件的門市</p>
+          </sc-if>
+        </section>
+
+      <!-- 圖表 -->
+      <sc-for list="{{charts}}" as="ch" hint-placeholder-count="3">
+        <section aria-label="{{ch.title}}" style="margin: 0 16px 14px; border: 1px solid #e3e3e3; border-radius: 8px; padding: 10px 0 12px">
+          <div style="display: flex; align-items: center; gap: 2px; padding: 0 8px 0 16px">
+            <h3 style="flex: 1; margin: 0; font-size: 15px; font-weight: 700; color: #222222">{{ch.title}}</h3>
+            <button type="button" aria-label="此圖表的更多操作" onClick="{{openChartMore}}" style="flex: none; width: 44px; height: 44px; margin-right: -8px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 22px; background: none; color: #444444; cursor: pointer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+            </button>
+          </div>
+          <div style="padding: 4px 4px 0">
+            <div style="display: flex; justify-content: center; gap: 18px; margin-bottom: 10px; font-size: 12px; color: #555555">
+              <sc-for list="{{ch.legend}}" as="lg" hint-placeholder-count="2">
+                <span style="display: flex; align-items: center; gap: 6px"><span style="width: {{lg.w}}px; height: {{lg.h}}px; border-radius: {{lg.r}}px; background: {{lg.color}}"></span>{{lg.label}}</span>
+              </sc-for>
+            </div>
+            <div style="position: relative; height: {{ch.boxH}}px">
+              <sc-for list="{{ch.ticksL}}" as="t" hint-placeholder-count="6">
+                <div style="position: absolute; left: 0; width: 52px; top: {{t.top}}px; transform: translateY(-50%); text-align: right; font-size: 11px; color: #666666; font-variant-numeric: tabular-nums">{{t.label}}</div>
+              </sc-for>
+              <sc-for list="{{ch.ticksR}}" as="t" hint-placeholder-count="6">
+                <div style="position: absolute; left: {{ch.rightX}}px; top: {{t.top}}px; transform: translateY(-50%); font-size: 11px; color: #666666; font-variant-numeric: tabular-nums">{{t.label}}</div>
+              </sc-for>
+              <div style="position: absolute; left: 58px; top: 0; width: {{ch.plotW}}px; height: {{ch.plotH}}px; border-bottom: 1px solid #9a9a9a">
+                <sc-for list="{{ch.ticksL}}" as="t" hint-placeholder-count="6">
+                  <div style="position: absolute; left: 0; right: 0; top: {{t.top}}px; border-top: 1px dashed #e2d2e4"></div>
+                </sc-for>
+                <sc-if value="{{ch.hasTip}}" hint-placeholder-val="{{false}}">
+                  <div style="position: absolute; top: 0; bottom: 0; left: {{ch.guideLeft}}px; border-left: 1px dashed #9a9a9a"></div>
+                </sc-if>
+                <sc-for list="{{ch.bars}}" as="b" hint-placeholder-count="4">
+                  <button type="button" onClick="{{b.pick}}" aria-label="{{b.aria}}" style="position: absolute; left: {{b.left}}px; top: {{b.top}}px; width: {{b.w}}px; height: {{b.h}}px; border: 0; padding: 0; background: {{b.color}}; opacity: {{b.op}}; cursor: pointer"></button>
+                </sc-for>
+                <svg width="{{ch.plotW}}" height="{{ch.plotH}}" viewBox="0 0 {{ch.plotW}} {{ch.plotH}}" aria-hidden="true" style="position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none"><path d="{{ch.linePath}}" fill="none" stroke="{{ch.lineColor}}" stroke-width="2"></path></svg>
+                <sc-for list="{{ch.dots}}" as="d" hint-placeholder-count="4">
+                  <div style="position: absolute; left: {{d.left}}px; top: {{d.top}}px; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: {{d.color}}; pointer-events: none"></div>
+                </sc-for>
+                <sc-if value="{{ch.hasTip}}" hint-placeholder-val="{{false}}">
+                  <div style="position: absolute; top: 10px; left: {{ch.tipLeft}}px; width: 168px; box-sizing: border-box; padding: 10px 12px; background: #ffffff; border-radius: 6px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18); pointer-events: none; z-index: 2">
+                    <div style="font-size: 13px; color: #333333; margin-bottom: 6px">{{ch.tipTitle}}</div>
+                    <sc-for list="{{ch.tipRows}}" as="tr" hint-placeholder-count="2">
+                      <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 22px; color: #555555">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: {{tr.color}}"></span>
+                        <span style="flex: 1">{{tr.label}}</span>
+                        <span style="font-weight: 700; color: #222222; font-variant-numeric: tabular-nums">{{tr.value}}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+              <sc-for list="{{ch.xLabels}}" as="x" hint-placeholder-count="2">
+                <div style="position: absolute; top: {{ch.xTop}}px; left: {{x.left}}px; transform: translateX(-50%); white-space: nowrap; font-size: 11px; {{x.css}}">{{x.label}}</div>
+              </sc-for>
+            </div>
+            <div aria-hidden="true" style="position: relative; margin: 6px 0 0 58px; width: {{ch.plotW}}px; height: 20px; box-sizing: border-box; border: 1px solid #b9c8e6; border-radius: 3px; background: #e3ebf8">
+              <span style="position: absolute; left: -4px; top: 2px; width: 7px; height: 14px; border: 1px solid #8fa6cf; border-radius: 2px; background: #ffffff"></span>
+              <span style="position: absolute; right: -4px; top: 2px; width: 7px; height: 14px; border: 1px solid #8fa6cf; border-radius: 2px; background: #ffffff"></span>
+            </div>
+            <div style="margin: 8px 0 0 58px; font-size: 12px; color: #6b6b6b">點長條查看數值；拖曳拉桿縮放範圍。</div>
+          </div>
+        </section>
+      </sc-for>
+      <p style="margin: 0; padding: 4px 16px 32px; font-size: 12px; color: #6b6b6b">資料更新 2026/11/10 15:20 ・ 圖表為示意資料；分享或匯出時會附上日期、品牌與門市範圍。</p>
+      </sc-if>
+      <sc-if value="{{isTable}}" hint-placeholder-val="{{false}}">
+      <!-- 表格模式：[指標（多選）] [分組] [圖表|表格] -->
+      <div style="display: flex; align-items: center; gap: 6px; padding: 10px 16px 8px">
+          <button type="button" onClick="{{openCols}}" aria-label="指標：已選 {{colCount}} 個，點選調整（可多選）" style="height: 36px; display: inline-flex; align-items: center; gap: 4px; padding: 0 8px 0 12px; border: 1px solid #26979d; border-radius: 18px; background: #f0f8f8; font-family: inherit; font-size: 15px; font-weight: 700; color: #145f64; cursor: pointer; white-space: nowrap">{{colCount}} 個指標<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+          <button type="button" onClick="{{openDim}}" aria-label="分組方式：{{dimLabel}}" style="height: 36px; display: inline-flex; align-items: center; gap: 4px; padding: 0 8px 0 12px; border: 1px solid #cfcfcf; border-radius: 18px; background: #ffffff; font-family: inherit; font-size: 15px; font-weight: 500; color: #222222; cursor: pointer; white-space: nowrap">依{{dimLabel}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+          <div role="tablist" aria-label="檢視方式" style="margin-left: auto; display: flex; border: 1px solid #cfcfcf; border-radius: 4px; overflow: hidden">
+            <sc-for list="{{viewOpts}}" as="v" hint-placeholder-count="2">
+              <button type="button" role="tab" aria-selected="{{v.pressed}}" onClick="{{v.pick}}" style="height: 36px; padding: 0 12px; border: 0; font-family: inherit; font-size: 14px; color: #333333; cursor: pointer; {{v.css}}">{{v.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+      <sc-if value="{{showMerge}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 0 16px 10px">
+          <span style="flex: none; font-size: 14px; color: #555555">群組合併</span>
+          <div style="flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #cfcfcf; border-radius: 4px; overflow: hidden">
+            <sc-for list="{{mergeOpts}}" as="m" hint-placeholder-count="2">
+              <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="height: 40px; border: 0; font-family: inherit; font-size: 15px; color: #333333; cursor: pointer; {{m.css}}">{{m.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- 表格 -->
+      <div style="overflow-x: auto; border-top: 1px solid #e8e8e8">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+          <div style="display: grid; grid-template-columns: {{r.tpl}}; width: {{r.w}}px">
+            <sc-for list="{{r.cells}}" as="c" hint-placeholder-count="4">
+              <div style="box-sizing: border-box; padding: 10px 12px; border-bottom: 1px solid #e8e8e8; font-size: 14px; line-height: 20px; {{c.css}}">
+                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.text}}</div>
+                <sc-if value="{{c.hasSub}}" hint-placeholder-val="{{false}}">
+                  <div style="font-size: 12px; line-height: 16px; color: #6b6b6b">{{c.sub}}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{noRows}}" hint-placeholder-val="{{false}}">
+        <p style="margin: 0; padding: 32px 16px; text-align: center; font-size: 14px; color: #5f5f5f">沒有符合條件的門市</p>
+      </sc-if>
+      <p style="margin: 0; padding: 12px 16px 16px; font-size: 12px; color: #6b6b6b">資料更新 2026/11/10 15:20 ・ 列表為示意資料，僅列 8 間門市；表格可左右滑動。</p>
+
+      </sc-if>
+      </sc-if>
+    </sc-if>
+  </div>
+
+  <!-- 底部面板 -->
+  <sc-if value="{{anySheet}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end">
+      <button type="button" aria-label="關閉面板" onClick="{{closeSheet}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 0; padding: 0; background: rgba(0, 0, 0, 0.45); cursor: pointer"></button>
+      <div role="dialog" aria-label="{{sheetTitle}}" style="position: relative; height: {{sheetH}}; max-height: 88%; display: flex; flex-direction: column; background: #ffffff; border-radius: 12px 12px 0 0; overflow: hidden">
+        <div style="flex: none; display: flex; align-items: center; gap: 4px; padding: 6px 6px 6px 8px; border-bottom: 1px solid #e3e3e3">
+          <sc-if value="{{showBack}}" hint-placeholder-val="{{false}}">
+            <button type="button" aria-label="返回上一層" onClick="{{sheetBack}}" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; background: none; color: #333333; cursor: pointer">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+            </button>
+          </sc-if>
+          <h2 style="flex: 1; margin: 0; padding-left: 12px; font-size: 18px; font-weight: 500; color: #222222">{{sheetTitle}}</h2>
+          <button type="button" aria-label="關閉" onClick="{{closeSheet}}" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; background: none; color: #333333; cursor: pointer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+
+        <!-- 搜尋條件（含顯示設定） -->
+        <sc-if value="{{sheetQuery}}" hint-placeholder-val="{{false}}">
+          <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 16px 20px">
+            <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #cfcfcf; border-radius: 4px; overflow: hidden">
+              <sc-for list="{{periodOpts}}" as="p" hint-placeholder-count="3">
+                <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="height: 44px; border: 0; font-family: inherit; font-size: 16px; color: #333333; cursor: pointer; {{p.css}}">{{p.label}}</button>
+              </sc-for>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px">
+              <span style="width: 56px; flex: none; font-size: 15px; color: #555555">日期</span>
+              <sc-for list="{{dateOpts}}" as="o" hint-placeholder-count="2">
+                <button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="display: flex; align-items: center; gap: 8px; height: 44px; border: 0; background: none; padding: 0; font-family: inherit; font-size: 15px; cursor: pointer; color: {{o.color}}">
+                  <span style="width: 18px; height: 18px; box-sizing: border-box; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid {{o.ring}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{o.dot}}"></span></span>
+                  {{o.label}}
+                </button>
+              </sc-for>
+            </div>
+            <button type="button" onClick="{{openDate}}" style="display: flex; align-items: center; justify-content: space-between; width: 260px; height: 44px; border: 0; border-bottom: 1px solid #333333; background: none; padding: 0 2px; font-family: inherit; font-size: 16px; color: #222222; cursor: pointer">{{dDateText}}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c77a12" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+            </button>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="width: 64px; flex: none; font-size: 15px; color: #555555">集團名稱</span>
+              <button type="button" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 44px; border: 0; border-bottom: 1px solid #333333; background: none; padding: 0 2px; font-family: inherit; font-size: 15px; color: #222222; text-align: left; cursor: pointer">
+                <span style="flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">唯賀國際餐飲股份有限公司(NU)</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="width: 64px; flex: none; font-size: 15px; color: #555555">品牌名稱</span>
+              <button type="button" onClick="{{openBrand}}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 44px; border: 0; border-bottom: 1px solid #333333; background: none; padding: 0 2px; font-family: inherit; font-size: 15px; color: #222222; text-align: left; cursor: pointer">
+                <span style="flex: 1; min-width: 0; color: {{dBrandColor}}">{{dBrandText}}</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="width: 64px; flex: none; font-size: 15px; color: #555555">門市篩選</span>
+              <button type="button" onClick="{{openStores}}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 44px; border: 0; border-bottom: 1px solid #333333; background: none; padding: 0 2px; font-family: inherit; font-size: 15px; color: #222222; text-align: left; cursor: pointer">
+                <span style="flex: 1">數量：{{dStoreCount}}</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+              </button>
+            </div>
+
+            <p style="margin: 0; font-size: 12px; color: #6b6b6b">未按「搜尋」就關閉，查詢範圍不會變更。</p>
+          </div>
+          <div style="flex: none; padding: 12px 20px 20px; border-top: 1px solid #eeeeee">
+            <button type="button" onClick="{{search}}" style="width: 100%; height: 48px; border: 0; border-radius: 4px; background: #c94a26; font-family: inherit; font-size: 16px; font-weight: 700; color: #ffffff; cursor: pointer">搜尋</button>
+          </div>
+        </sc-if>
+
+        <!-- 日期（面板內下一層） -->
+        <sc-if value="{{sheetDate}}" hint-placeholder-val="{{false}}">
+          <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 14px 20px">
+            <div style="font-size: 18px; font-weight: 700; color: #222222; font-variant-numeric: tabular-nums">{{dDateText}}</div>
+            <div style="display: flex; gap: 8px">
+              <sc-for list="{{quickDates}}" as="qd" hint-placeholder-count="3">
+                <button type="button" onClick="{{qd.pick}}" style="height: 36px; padding: 0 14px; border: 1px solid #cfcfcf; border-radius: 18px; background: #ffffff; font-family: inherit; font-size: 14px; color: #333333; cursor: pointer">{{qd.label}}</button>
+              </sc-for>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px">
+              <button type="button" aria-label="上個月" style="width: 44px; height: 44px; border: 0; background: none; color: #555555; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+              <span style="font-size: 16px; font-weight: 500; color: #333333">2026 年 11 月</span>
+              <button type="button" aria-label="下個月" style="width: 44px; height: 44px; border: 0; background: none; color: #555555; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 4px; text-align: center">
+              <sc-for list="{{weekNames}}" as="wn" hint-placeholder-count="7">
+                <div style="font-size: 12px; color: #6b6b6b; padding-bottom: 4px">{{wn}}</div>
+              </sc-for>
+              <sc-for list="{{calCells}}" as="cc" hint-placeholder-count="35">
+                <button type="button" onClick="{{cc.pick}}" disabled="{{cc.disabled}}" aria-label="{{cc.aria}}" aria-pressed="{{cc.pressed}}" style="height: 44px; border: 0; padding: 0; font-family: inherit; font-size: 15px; font-variant-numeric: tabular-nums; cursor: pointer; {{cc.css}}">{{cc.label}}</button>
+              </sc-for>
+            </div>
+            <p style="margin: 0; font-size: 12px; color: #6b6b6b">點選起日，再點選迄日。</p>
+          </div>
+          <div style="flex: none; padding: 12px 20px 20px; border-top: 1px solid #eeeeee">
+            <button type="button" onClick="{{sheetBack}}" style="width: 100%; height: 48px; border: 0; border-radius: 4px; background: #c94a26; font-family: inherit; font-size: 16px; font-weight: 700; color: #ffffff; cursor: pointer">確定</button>
+          </div>
+        </sc-if>
+
+        <!-- 品牌（面板內下一層） -->
+        <sc-if value="{{sheetBrand}}" hint-placeholder-val="{{false}}">
+          <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 8px 12px 20px">
+            <sc-for list="{{brandOpts}}" as="bo" hint-placeholder-count="3">
+              <button type="button" onClick="{{bo.pick}}" aria-pressed="{{bo.pressed}}" style="display: flex; align-items: center; gap: 12px; height: 52px; border: 0; border-radius: 4px; padding: 0 12px; font-family: inherit; font-size: 16px; text-align: left; cursor: pointer; {{bo.css}}">
+                <span style="flex: 1">{{bo.label}}</span>
+                <sc-if value="{{bo.sel}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1d7f85" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- 門市篩選（面板內下一層） -->
+        <sc-if value="{{sheetStores}}" hint-placeholder-val="{{false}}">
+          <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 12px 20px">
+            <label style="display: flex; align-items: center; gap: 8px; height: 44px; border-bottom: 1px solid #8a8a8a; color: #555555; margin-bottom: 10px">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+              <input placeholder="過濾條件" aria-label="過濾門市" style="flex: 1; min-width: 0; border: 0; outline: none; background: none; font-family: inherit; font-size: 15px; color: #222222">
+            </label>
+            <sc-for list="{{storeItems}}" as="it" hint-placeholder-count="10">
+              <sc-if value="{{it.isHeader}}" hint-placeholder-val="{{false}}">
+                <button type="button" onClick="{{it.toggle}}" aria-pressed="{{it.pressed}}" aria-label="整組選取：{{it.label}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 6px; border: 0; border-bottom: 1px solid #eeeeee; background: none; padding: 0 10px; font-family: inherit; font-size: 14px; font-weight: 500; color: #333333; text-align: left; cursor: pointer">
+                  <span style="flex: none; width: 20px; height: 20px; box-sizing: border-box; border-radius: 3px; display: flex; align-items: center; justify-content: center; border: 2px solid {{it.border}}; background: {{it.bg}}">
+                    <sc-if value="{{it.all}}" hint-placeholder-val="{{true}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></sc-if>
+                    <sc-if value="{{it.some}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"></path></svg></sc-if>
+                  </span>
+                  <span style="flex: 1">{{it.label}}</span>
+                  <span style="font-size: 12px; font-weight: 400; color: #6b6b6b">{{it.code}}</span>
+                </button>
+              </sc-if>
+              <sc-if value="{{it.isItem}}" hint-placeholder-val="{{true}}">
+                <button type="button" onClick="{{it.toggle}}" aria-pressed="{{it.pressed}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; border: 0; font-family: inherit; font-size: 15px; color: #1d7f85; text-align: left; cursor: pointer; {{it.css}}">
+                  <span style="flex: none; width: 20px; height: 20px; box-sizing: border-box; border-radius: 3px; display: flex; align-items: center; justify-content: center; border: 2px solid {{it.border}}; background: {{it.bg}}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+                  </span>
+                  <span style="flex: 1">{{it.label}}</span>
+                  <span style="font-size: 12px; color: #6b6b6b">{{it.code}}</span>
+                </button>
+              </sc-if>
+            </sc-for>
+            <div style="padding: 8px 10px 0 40px; font-size: 12px; color: #6b6b6b">…其餘 55 間門市略</div>
+          </div>
+          <div style="flex: none; padding: 12px 20px 20px; border-top: 1px solid #eeeeee">
+            <button type="button" onClick="{{sheetBack}}" style="width: 100%; height: 48px; border: 0; border-radius: 4px; background: #c94a26; font-family: inherit; font-size: 16px; font-weight: 700; color: #ffffff; cursor: pointer">確定（{{dStoreCount}} 間）</button>
+          </div>
+        </sc-if>
+
+        <!-- 統計欄位（面板內下一層） -->
+        <sc-if value="{{sheetCols}}" hint-placeholder-val="{{false}}">
+          <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 12px 20px">
+            <label style="display: flex; align-items: center; gap: 8px; height: 44px; border-bottom: 1px solid #8a8a8a; color: #555555">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+              <input placeholder="過濾條件" aria-label="過濾欄位" style="flex: 1; min-width: 0; border: 0; outline: none; background: none; font-family: inherit; font-size: 15px; color: #222222">
+            </label>
+            <button type="button" onClick="{{toggleCode}}" aria-pressed="{{codePressed}}" style="display: flex; align-items: center; gap: 10px; height: 44px; margin-top: 8px; border: 0; background: none; padding: 0 10px; font-family: inherit; font-size: 15px; color: #333333; cursor: pointer">
+              <span style="width: 20px; height: 20px; box-sizing: border-box; border-radius: 3px; display: flex; align-items: center; justify-content: center; border: 2px solid {{codeBorder}}; background: {{codeBg}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span>
+              門市名稱旁顯示門市代碼
+            </button>
+            <div style="font-size: 13px; color: #5f5f5f; margin-top: 10px">常用組合</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px">
+              <sc-for list="{{presetOpts}}" as="p" hint-placeholder-count="3">
+                <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="height: 36px; padding: 0 14px; border-radius: 18px; font-family: inherit; font-size: 14px; cursor: pointer; {{p.css}}">{{p.label}}</button>
+              </sc-for>
+            </div>
+            <sc-for list="{{colItems}}" as="c" hint-placeholder-count="9">
+              <button type="button" onClick="{{c.toggle}}" aria-pressed="{{c.pressed}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; border: 0; font-family: inherit; font-size: 15px; color: #1d7f85; text-align: left; cursor: pointer; {{c.css}}">
+                <span style="flex: none; width: 20px; height: 20px; box-sizing: border-box; border-radius: 3px; display: flex; align-items: center; justify-content: center; border: 2px solid {{c.border}}; background: {{c.bg}}">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+                </span>
+                {{c.label}}
+              </button>
+            </sc-for>
+            <div style="padding: 6px 10px 0 40px; font-size: 12px; color: #6b6b6b">…其餘 20 個欄位略</div>
+          </div>
+          <div style="flex: none; padding: 12px 20px 20px; border-top: 1px solid #eeeeee">
+            <button type="button" onClick="{{sheetBack}}" style="width: 100%; height: 48px; border: 0; border-radius: 4px; background: #c94a26; font-family: inherit; font-size: 16px; font-weight: 700; color: #ffffff; cursor: pointer">確定（{{colCount}} 個指標）</button>
+          </div>
+        </sc-if>
+
+        <!-- 全部指標（只用於圖表；同時是完整的指標總覽） -->
+        <sc-if value="{{sheetMetric}}" hint-placeholder-val="{{false}}">
+          <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 8px 12px 20px">
+            <label style="display: flex; align-items: center; gap: 8px; height: 44px; margin: 0 8px 6px; border-bottom: 1px solid #8a8a8a; color: #555555">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+              <input placeholder="搜尋指標" aria-label="搜尋指標" style="flex: 1; min-width: 0; border: 0; outline: none; background: none; font-family: inherit; font-size: 15px; color: #222222">
+            </label>
+            <sc-for list="{{chartMetricOpts}}" as="mo" hint-placeholder-count="8">
+              <button type="button" onClick="{{mo.pick}}" aria-pressed="{{mo.pressed}}" style="display: flex; align-items: center; gap: 10px; height: 48px; border: 0; border-radius: 4px; padding: 0 12px; font-family: inherit; font-size: 15px; text-align: left; cursor: pointer; {{mo.css}}">
+                <span style="flex: 1; min-width: 0">{{mo.label}}</span>
+                <span style="font-variant-numeric: tabular-nums; color: #333333">{{mo.value}}</span>
+                <span style="width: 20px; display: flex; justify-content: center">
+                  <sc-if value="{{mo.sel}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d7f85" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></sc-if>
+                </span>
+              </button>
+            </sc-for>
+            <p style="margin: 6px 12px 0; font-size: 12px; color: #6b6b6b">…其餘 20 項略。數字為目前範圍的總計；圖表一次看一個指標，要同時比較多個，請切到「表格」。</p>
+          </div>
+        </sc-if>
+
+        <!-- 分組方式（圖表與表格共用） -->
+        <sc-if value="{{sheetDim}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 12px 24px">
+            <sc-for list="{{dimOpts}}" as="dm" hint-placeholder-count="2">
+              <button type="button" onClick="{{dm.pick}}" aria-pressed="{{dm.pressed}}" style="display: flex; align-items: center; gap: 12px; min-height: 56px; border: 0; border-radius: 4px; padding: 6px 12px; font-family: inherit; text-align: left; cursor: pointer; {{dm.css}}">
+                <span style="flex: 1"><span style="display: block; font-size: 16px">{{dm.label}}</span><span style="display: block; font-size: 12px; color: #6b6b6b">{{dm.desc}}</span></span>
+                <sc-if value="{{dm.sel}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1d7f85" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- 篩選（不需重新搜尋） -->
+        <sc-if value="{{sheetFilter}}" hint-placeholder-val="{{false}}">
+          <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 16px 20px">
+            <div style="font-size: 14px; color: #555555">只看符合條件的門市</div>
+            <sc-if value="{{noConds}}" hint-placeholder-val="{{false}}">
+              <p style="margin: 4px 0; font-size: 13px; color: #6b6b6b">例：營業額 ≥ 300,000</p>
+            </sc-if>
+            <sc-for list="{{condRows}}" as="c" hint-placeholder-count="1">
+              <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 100px 40px; gap: 6px; align-items: center">
+                <select value="{{c.m}}" onChange="{{c.setM}}" aria-label="欄位" style="height: 44px; min-width: 0; border: 0; border-bottom: 1px solid #333333; background: none; font-family: inherit; font-size: 15px; color: #222222" data-opts="metricOpts"></select>
+                <select value="{{c.op}}" onChange="{{c.setOp}}" aria-label="比較方式" style="height: 44px; border: 0; border-bottom: 1px solid #333333; background: none; font-family: inherit; font-size: 16px; color: #222222" data-opts="opOpts"></select>
+                <input value="{{c.v}}" onChange="{{c.setV}}" inputmode="decimal" placeholder="數值" aria-label="數值" style="height: 44px; min-width: 0; box-sizing: border-box; border: 0; border-bottom: 1px solid #333333; outline: none; background: none; padding: 0 2px; font-family: inherit; font-size: 15px; color: #222222; text-align: right">
+                <button type="button" onClick="{{c.remove}}" aria-label="刪除此條件" style="width: 40px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; background: none; color: #555555; cursor: pointer">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                </button>
+              </div>
+            </sc-for>
+            <button type="button" onClick="{{addCond}}" style="align-self: flex-start; height: 44px; display: flex; align-items: center; gap: 6px; border: 0; background: none; padding: 0 2px; font-family: inherit; font-size: 15px; font-weight: 500; color: #1d7f85; cursor: pointer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>新增條件
+            </button>
+          </div>
+          <div style="flex: none; display: flex; gap: 12px; padding: 12px 20px 20px; border-top: 1px solid #eeeeee">
+            <button type="button" onClick="{{clearFilter}}" style="width: 110px; height: 48px; border: 1px solid #cfcfcf; border-radius: 4px; background: #ffffff; font-family: inherit; font-size: 16px; color: #333333; cursor: pointer">清除全部</button>
+            <button type="button" onClick="{{closeSheet}}" style="flex: 1; height: 48px; border: 0; border-radius: 4px; background: #c94a26; font-family: inherit; font-size: 16px; font-weight: 700; color: #ffffff; cursor: pointer">顯示 {{matchCount}} 間門市</button>
+          </div>
+        </sc-if>
+
+        <!-- 此圖表的更多操作 -->
+        <sc-if value="{{sheetChartMore}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; padding: 8px 16px 24px">
+            <button type="button" onClick="{{closeSheet}}" style="display: flex; align-items: center; gap: 14px; min-height: 52px; border: 0; background: none; padding: 4px 4px; font-family: inherit; font-size: 16px; color: #222222; text-align: left; cursor: pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"></path><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path></svg>
+              <span><span style="display: block">分享圖卡</span><span style="display: block; font-size: 12px; color: #6b6b6b">傳到 LINE、Email 等，附日期、品牌與門市範圍</span></span>
+            </button>
+            <button type="button" onClick="{{closeSheet}}" style="display: flex; align-items: center; gap: 14px; min-height: 52px; border: 0; background: none; padding: 4px 4px; font-family: inherit; font-size: 16px; color: #222222; text-align: left; cursor: pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>
+              <span><span style="display: block">匯出圖片</span><span style="display: block; font-size: 12px; color: #6b6b6b">存成 PNG，附同樣的查詢條件</span></span>
+            </button>
+          </div>
+        </sc-if>
+
+        <!-- 更多 -->
+        <sc-if value="{{sheetMore}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; padding: 8px 16px 24px">
+            <button type="button" onClick="{{closeSheet}}" style="display: flex; align-items: center; gap: 14px; height: 52px; border: 0; background: none; padding: 0 4px; font-family: inherit; font-size: 16px; color: #222222; text-align: left; cursor: pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>重新整理資料
+            </button>
+            <button type="button" onClick="{{closeSheet}}" style="display: flex; align-items: center; gap: 14px; height: 52px; border: 0; background: none; padding: 0 4px; font-family: inherit; font-size: 16px; color: #222222; text-align: left; cursor: pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>全螢幕顯示
+            </button>
+            <button type="button" onClick="{{closeSheet}}" style="display: flex; align-items: center; gap: 14px; height: 52px; border: 0; background: none; padding: 0 4px; font-family: inherit; font-size: 16px; color: #222222; text-align: left; cursor: pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>下載
+            </button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</template>
+<script>
+class DCLogic {
+  constructor(props) { this.props = props; this.state = undefined; }
+  setState(p) { this.state = Object.assign({}, this.state || {}, p); render(); }
+
+class Component extends DCLogic {
+  S() {
+    var st = this.props.start || 'query';
+    var sheets = ['edit', 'stores', 'columns', 'filter', 'more', 'dim', 'metric', 'chartMore'];
+    var d = {
+      searched: st !== 'query',
+      sheet: sheets.indexOf(st) >= 0 ? (st === 'edit' ? 'query' : st) : null,
+      from: st === 'stores' ? 'query' : null,
+      period: 'day', dateType: 'post', df: 4, dt: 5, brand: 'NU Pasta', loading: false,
+      stores: { N001: true, N002: true, N003: true, N004: true, C001: true, C002: true, C003: true, X001: true },
+      mode: 'store', showCode: false,
+      cols: { rev: true, cnt: true, avg: true, void: true, voidPct: true, voidAmt: true, voidAmtPct: true, lastWeek: true },
+      d: null,
+      merge: true,
+      groups: { '北部菜單': true, '中部菜單': true, '(未知)': true },
+      conds: st === 'filter' ? [{ id: 1, m: 'rev', op: 'ge', v: '300000' }] : [],
+      nextId: 2,
+      q: '',
+      sel: {},
+      view: st === 'resultTable' ? 'table' : 'chart',
+      metric: 'rev'
+    };
+    return Object.assign(d, this.state || {});
+  }
+
+  renderVals() {
+    var self = this;
+    var s = this.S();
+    var set = function (p) { self.setState(p); };
+    var top = function () { if (self.sc) self.sc.scrollTop = 0; };
+    var fmt = function (n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    var fmtI = function (n) { return n.toLocaleString('en-US'); };
+
+    var TEAL = '#1d7f85', TEAL_FILL = '#26979d', ORANGE = '#ffbb70';
+    var stores = [
+      { code: 'N001', name: '門市 A', group: '北部菜單', rev: 412350, cnt: 716 },
+      { code: 'N002', name: '門市 B', group: '北部菜單', rev: 368920, cnt: 645 },
+      { code: 'N003', name: '門市 C', group: '北部菜單', rev: 331480, cnt: 581 },
+      { code: 'N004', name: '門市 D', group: '北部菜單', rev: 297615, cnt: 522 },
+      { code: 'C001', name: '門市 E', group: '中部菜單', rev: 356240, cnt: 624 },
+      { code: 'C002', name: '門市 F', group: '中部菜單', rev: 288903, cnt: 509 },
+      { code: 'C003', name: '門市 G', group: '中部菜單', rev: 254600, cnt: 447 },
+      { code: 'X001', name: '門市 H', group: '(未知)', rev: 141600, cnt: 254 }
+    ];
+    var HIDDEN = 55;
+    // 其他指標的示意數字（依門市固定推算）
+    stores.forEach(function (x, i) {
+      var r = [0.006, 0.011, 0.008, 0.013, 0.007, 0.010, 0.009, 0.012][i];
+      x.void = Math.round(x.cnt * r);
+      x.voidAmt = Math.round(x.void * (x.rev / x.cnt) * 0.92);
+      x.lastWeek = Math.round(x.rev * [0.94, 0.97, 1.03, 0.92, 0.95, 1.01, 0.96, 0.90][i]);
+    });
+    var groups = ['北部菜單', '中部菜單', '(未知)'];
+    var metrics = [
+      { key: 'rev', label: '營業額' },
+      { key: 'cnt', label: '結帳單數' },
+      { key: 'avg', label: '平均訂單單價' },
+      { key: 'void', label: '作廢筆數' },
+      { key: 'voidPct', label: '作廢筆數佔比(%)' },
+      { key: 'voidAmt', label: '作廢金額' },
+      { key: 'voidAmtPct', label: '作廢金額佔比(%)' },
+      { key: 'lastWeek', label: '上週同期銷售額' }
+    ];
+    var mLabel = {}; metrics.forEach(function (m) { mLabel[m.key] = m.label; });
+    var ops = [{ key: 'eq', label: '=' }, { key: 'ne', label: '≠' }, { key: 'lt', label: '<' }, { key: 'le', label: '≤' }, { key: 'gt', label: '>' }, { key: 'ge', label: '≥' }];
+    var opLabel = {}; ops.forEach(function (o) { opLabel[o.key] = o.label; });
+
+    var radio = function (label, sel, pick) {
+      return { label: label, pick: pick, pressed: sel ? 'true' : 'false',
+        color: sel ? TEAL : '#333333', ring: sel ? TEAL_FILL : '#8a8a8a', dot: sel ? TEAL_FILL : 'transparent' };
+    };
+    var check = function (on) { return { border: on ? TEAL_FILL : '#8a8a8a', bg: on ? TEAL_FILL : '#ffffff', pressed: on ? 'true' : 'false' }; };
+    var seg = function (sel, i) {
+      return (sel ? 'background: ' + ORANGE + '; font-weight: 500;' : 'background: #ffffff;') + (i > 0 ? ' border-left: 1px solid #cfcfcf;' : '');
+    };
+    var countSel = function (obj) { return stores.filter(function (x) { return obj[x.code]; }).length; };
+    var countCols = function (obj) { return 20 + metrics.filter(function (m) { return obj[m.key]; }).length; };
+
+    // 搜尋草稿：查詢條件＋顯示設定，按「搜尋」才生效
+    var D = s.d || { period: s.period, dateType: s.dateType, stores: s.stores, df: s.df, dt: s.dt, brand: s.brand };
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var rangeText = function (a, b, sep) { return '2026/11/' + pad(a) + sep + '2026/11/' + pad(b || a); };
+    var setD = function (p) { set({ d: Object.assign({}, D, p) }); };
+
+    // 資料（表格用已搜尋的設定）
+    var num = function (key, o) {
+      if (key === 'rev') return o.rev;
+      if (key === 'cnt') return o.cnt;
+      if (key === 'avg') return o.cnt ? o.rev / o.cnt : null;
+      if (key === 'void') return o.void;
+      if (key === 'voidPct') return o.cnt ? o.void / o.cnt * 100 : null;
+      if (key === 'voidAmt') return o.voidAmt;
+      if (key === 'voidAmtPct') return o.rev ? o.voidAmt / o.rev * 100 : null;
+      if (key === 'lastWeek') return o.lastWeek;
+      return null;
+    };
+    var activeConds = s.conds.filter(function (c) { return String(c.v).trim() !== '' && !isNaN(Number(String(c.v).replace(/,/g, ''))); });
+    var passConds = function (x) {
+      return activeConds.every(function (c) {
+        var a = num(c.m, x); if (a === null) return true;
+        var b = Number(String(c.v).replace(/,/g, ''));
+        if (c.op === 'eq') return a === b; if (c.op === 'ne') return a !== b;
+        if (c.op === 'lt') return a < b; if (c.op === 'le') return a <= b;
+        if (c.op === 'gt') return a > b; return a >= b;
+      });
+    };
+    var q = (s.q || '').trim().toLowerCase();
+    var list = stores.filter(function (x) {
+      return s.stores[x.code] && s.groups[x.group] && passConds(x) && (!q || x.name.toLowerCase().indexOf(q) >= 0 || x.code.toLowerCase().indexOf(q) >= 0);
+    });
+    var sum = function (arr) {
+      var t = function (f) { return arr.reduce(function (a, b) { return a + (b[f] || 0); }, 0); };
+      return { rev: t('rev'), cnt: t('cnt'), void: t('void'), voidAmt: t('voidAmt'), lastWeek: t('lastWeek') };
+    };
+    var tot = sum(list);
+    var INTK = { cnt: 1, void: 1 }, PCTK = { voidPct: 1, voidAmtPct: 1, avg: 1 };
+    var val = function (key, o) {
+      var v = num(key, o); if (v === null || v === undefined) return '—';
+      return INTK[key] ? fmtI(v) : fmt(v);
+    };
+    var kval = function (key, o) {
+      var v = num(key, o); if (v === null || v === undefined) return '—';
+      return PCTK[key] ? fmt(v) : fmtI(Math.round(v));
+    };
+
+    var vis = metrics.filter(function (m) { return s.cols[m.key]; });
+    var groupCol = s.mode === 'store' && !s.merge;
+    var widths = [132].concat(groupCol ? [96] : []).concat(vis.map(function () { return 124; }));
+    var tableW = widths.reduce(function (a, b) { return a + b; }, 0);
+    var tpl = widths.map(function (w) { return w + 'px'; }).join(' ');
+
+    var firstCss = function (bg, extra) { return 'position: sticky; left: 0; z-index: 1; text-align: left; box-shadow: 1px 0 0 #e8e8e8; background: ' + bg + ';' + (extra || ''); };
+    var numCss = function (bg, extra) { return 'text-align: right; font-variant-numeric: tabular-nums; background: ' + bg + ';' + (extra || ''); };
+    var row = function (first, sub, groupText, o, bg, extra, firstExtra) {
+      var cells = [{ text: first, sub: sub || '', hasSub: !!sub, css: firstCss(bg, (extra || '') + (firstExtra || '')) }];
+      if (groupCol) cells.push({ text: groupText || '', sub: '', hasSub: false, css: 'background: ' + bg + '; color: #555555;' + (extra || '') });
+      vis.forEach(function (m) { cells.push({ text: val(m.key, o), sub: '', hasSub: false, css: numCss(bg, extra) }); });
+      return { tpl: tpl, w: tableW, cells: cells };
+    };
+
+    var headCss = 'font-size: 13px; color: #5f5f5f; background: #ffffff;';
+    var head = [{ text: s.mode === 'group' ? '門市群組' : '門市名稱', sub: '', hasSub: false, css: firstCss('#ffffff', 'font-size: 13px; color: #5f5f5f;') }];
+    if (groupCol) head.push({ text: '門市群組', sub: '', hasSub: false, css: headCss });
+    vis.forEach(function (m) { head.push({ text: m.label, sub: '', hasSub: false, css: headCss + ' text-align: right;' }); });
+
+    var rows = [{ tpl: tpl, w: tableW, cells: head }];
+    var noRows = list.length === 0;
+    if (!noRows) {
+      rows.push(row('總計', '', '', tot, '#f5f5f5', ' font-weight: 700; color: #444444;'));
+      var activeGroups = groups.filter(function (g) { return list.some(function (x) { return x.group === g; }); });
+      if (s.mode === 'group') {
+        activeGroups.forEach(function (g) {
+          var arr = list.filter(function (x) { return x.group === g; });
+          rows.push(row(g, arr.length + ' 間門市', '', sum(arr), '#ffffff'));
+        });
+      } else if (s.merge) {
+        activeGroups.forEach(function (g) {
+          var arr = list.filter(function (x) { return x.group === g; });
+          rows.push(row(g, '', '', sum(arr), '#eef7f7', ' font-weight: 500; color: #145f64;'));
+          arr.forEach(function (x) { rows.push(row(x.name, s.showCode ? x.code : '', '', x, '#ffffff', '', ' padding-left: 24px;')); });
+        });
+      } else {
+        list.forEach(function (x) { rows.push(row(x.name, s.showCode ? x.code : '', x.group, x, '#ffffff')); });
+      }
+    }
+
+    // 篩選
+    var allGroupsOn = { '北部菜單': true, '中部菜單': true, '(未知)': true };
+    var selGroups = groups.filter(function (g) { return s.groups[g]; });
+    var groupFiltered = selGroups.length < groups.length;
+    var filtered = groupFiltered || activeConds.length > 0;
+    var chips = [];
+    if (groupFiltered) chips.push({ label: '只看：' + (selGroups.length ? selGroups.join('、') : '無'), clear: function () { set({ groups: allGroupsOn }); } });
+    activeConds.forEach(function (c) {
+      var n = Number(String(c.v).replace(/,/g, ''));
+      chips.push({ label: '篩選：' + mLabel[c.m] + ' ' + opLabel[c.op] + ' ' + n.toLocaleString('en-US'),
+        clear: function () { set({ conds: s.conds.filter(function (x) { return x.id !== c.id; }) }); } });
+    });
+    if (s.q) chips.push({ label: '篩選：關鍵字「' + s.q + '」', clear: function () { set({ q: '' }); } });
+
+    var allGroups = selGroups.length === groups.length;
+    var groupItems = [Object.assign({ label: '全部', css: 'background: #e6e6e6; border-radius: 2px;', toggle: function () {
+      var g = {}; groups.forEach(function (k) { g[k] = !allGroups; }); set({ groups: g });
+    } }, check(allGroups))].concat(groups.map(function (k) {
+      return Object.assign({ label: k, css: 'background: none; padding-left: 28px;', toggle: function () {
+        var g = Object.assign({}, s.groups); g[k] = !g[k]; set({ groups: g });
+      } }, check(!!s.groups[k]));
+    }));
+
+    var updCond = function (id, p) {
+      set({ conds: s.conds.map(function (c) { return c.id === id ? Object.assign({}, c, p) : c; }) });
+    };
+    var condRows = s.conds.map(function (c) {
+      return { m: c.m, op: c.op, v: c.v,
+        setM: function (e) { updCond(c.id, { m: e.target.value }); },
+        setOp: function (e) { updCond(c.id, { op: e.target.value }); },
+        setV: function (e) { updCond(c.id, { v: e.target.value }); },
+        remove: function () { set({ conds: s.conds.filter(function (x) { return x.id !== c.id; }) }); } };
+    });
+
+    // 門市篩選（草稿）
+    var dSel = countSel(D.stores);
+    var allD = dSel === stores.length;
+    var storeItems = [Object.assign({ isHeader: false, isItem: true, label: '全部', code: '', css: 'background: #e6e6e6; border-radius: 2px; padding: 0 10px;', toggle: function () {
+      var o = {}; stores.forEach(function (x) { o[x.code] = !allD; }); setD({ stores: o });
+    } }, check(allD))];
+    groups.forEach(function (g) {
+      var gs = stores.filter(function (x) { return x.group === g; });
+      var nOn = gs.filter(function (x) { return D.stores[x.code]; }).length;
+      var gAll = nOn === gs.length, gSome = nOn > 0 && !gAll;
+      storeItems.push({ isHeader: true, isItem: false, label: g, code: nOn + ' / ' + gs.length + ' 間', css: '', all: gAll, some: gSome,
+        border: (gAll || gSome) ? TEAL_FILL : '#8a8a8a', bg: (gAll || gSome) ? TEAL_FILL : '#ffffff', pressed: gAll ? 'true' : (gSome ? 'mixed' : 'false'),
+        toggle: function () { var o = Object.assign({}, D.stores); gs.forEach(function (x) { o[x.code] = !gAll; }); setD({ stores: o }); } });
+      stores.filter(function (x) { return x.group === g; }).forEach(function (x) {
+        storeItems.push(Object.assign({ isHeader: false, isItem: true, label: x.name, code: x.code, css: 'background: none; padding: 0 10px 0 28px;', toggle: function () {
+          var o = Object.assign({}, D.stores); o[x.code] = !o[x.code]; setD({ stores: o });
+        } }, check(!!D.stores[x.code])));
+      });
+    });
+
+    // 統計欄位（套在結果上，即時）
+    var allCols = metrics.every(function (m) { return s.cols[m.key]; });
+    var colItems = [Object.assign({ label: '全部', css: 'background: #e6e6e6; border-radius: 2px; padding: 0 10px;', toggle: function () {
+      var c = {}; metrics.forEach(function (m) { c[m.key] = !allCols; }); set({ cols: c });
+    } }, check(allCols))].concat(metrics.map(function (m) {
+      return Object.assign({ label: m.label, css: 'background: none; padding: 0 10px 0 28px;', toggle: function () {
+        var c = Object.assign({}, s.cols); c[m.key] = !c[m.key]; set({ cols: c });
+      } }, check(!!s.cols[m.key]));
+    }));
+    var presets = [
+      { label: '全部', keys: metrics.map(function (m) { return m.key; }) },
+      { label: '營收概覽', keys: ['rev', 'cnt', 'avg', 'lastWeek'] },
+      { label: '作廢分析', keys: ['cnt', 'void', 'voidPct', 'voidAmt', 'voidAmtPct'] }
+    ];
+    var presetOpts = presets.map(function (p) {
+      var on = metrics.every(function (m) { return !!s.cols[m.key] === (p.keys.indexOf(m.key) >= 0); });
+      return { label: p.label, pressed: on ? 'true' : 'false',
+        css: on ? 'border: 1px solid ' + TEAL_FILL + '; background: #eaf6f7; color: #145f64; font-weight: 500;' : 'border: 1px solid #cfcfcf; background: #ffffff; color: #333333;',
+        pick: function () { var c = {}; metrics.forEach(function (m) { c[m.key] = p.keys.indexOf(m.key) >= 0; }); set({ cols: c }); } };
+    });
+
+
+    // 圖表（示意資料，依篩選後合計等比例變動）
+    var PW = 246, PH = 180;
+    var rr = tot.rev / 2451708, rc = tot.cnt / 4298;
+    var niceMax = function (v, n) {
+      if (!(v > 0)) return n;
+      var raw = v / n, pw = Math.pow(10, Math.floor(Math.log10(raw))), ms = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+      for (var i = 0; i < ms.length; i++) if (ms[i] * pw >= raw) return ms[i] * pw * n;
+      return 10 * pw * n;
+    };
+    var mkTicks = function (max, n) { var a = []; for (var i = 0; i <= n; i++) a.push({ label: fmtI(Math.round(max * i / n)), top: PH - PH * i / n }); return a; };
+    var sel = s.sel || {};
+    var makeChart = function (o) {
+      var n = o.cats.length, slot = PW / n, groups = o.bars.length;
+      var barW = groups === 1 ? Math.min(slot * 0.78, 96) : Math.min(slot * 0.34, 44);
+      var lmax = niceMax(Math.max.apply(null, o.bars.reduce(function (a, b) { return a.concat(b.vals); }, [1])) * 1.05, 5);
+      var rmax = o.line ? niceMax(Math.max.apply(null, o.line.vals.concat([1])) * 1.1, 5) : 0;
+      var si = sel[o.id]; if (si === undefined) si = null;
+      var pick = function (i) { return function () { var ns = Object.assign({}, sel); ns[o.id] = (si === i ? null : i); set({ sel: ns }); }; };
+      var bars = [];
+      o.bars.forEach(function (ser, g) {
+        ser.vals.forEach(function (v, i) {
+          var h = Math.max(0, v / lmax * PH);
+          bars.push({ left: i * slot + (slot - groups * barW - (groups - 1) * 4) / 2 + g * (barW + 4), w: barW, h: h, top: PH - h,
+            color: ser.color, op: (si === null || si === i) ? 1 : 0.5, pick: pick(i), aria: o.cats[i] + ' ' + ser.name + ' ' + fmtI(Math.round(v)) });
+        });
+      });
+      var pts = o.line ? o.line.vals.map(function (v, i) { return [i * slot + slot / 2, PH - v / rmax * PH]; }) : [];
+      var path = '';
+      if (pts.length) {
+        path = 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+        for (var i = 0; i < pts.length - 1; i++) {
+          var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+          if (o.line.smooth) path += ' C' + (p1[0] + (p2[0] - p0[0]) / 6).toFixed(1) + ' ' + (p1[1] + (p2[1] - p0[1]) / 6).toFixed(1) + ' ' + (p2[0] - (p3[0] - p1[0]) / 6).toFixed(1) + ' ' + (p2[1] - (p3[1] - p1[1]) / 6).toFixed(1) + ' ' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1);
+          else path += ' L' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1);
+        }
+      }
+      var xl = [];
+      if (o.sparse) {
+        if (si !== 0) xl.push({ label: o.cats[0], left: 58 + Math.max(slot / 2, 44), css: 'color: #555555;' });
+        if (si !== null) xl.push({ label: o.cats[si], left: Math.min(Math.max(58 + si * slot + slot / 2, 100), 58 + PW - 52), css: 'background: #6b6b6b; color: #ffffff; padding: 1px 6px; border-radius: 3px;' });
+      } else {
+        o.cats.forEach(function (c, i) { xl.push({ label: c, left: 58 + i * slot + slot / 2, css: si === i ? 'color: #222222; font-weight: 700;' : 'color: #555555;' }); });
+      }
+      var legend = o.bars.map(function (b) { return { label: b.name, color: b.color, w: 14, h: 10, r: 2 }; });
+      if (o.line) legend.push({ label: o.line.name, color: o.line.color, w: 16, h: 3, r: 2 });
+      var tipRows = [];
+      if (si !== null) {
+        o.bars.forEach(function (b) { tipRows.push({ label: b.name, color: b.color, value: fmtI(Math.round(b.vals[si])) }); });
+        if (o.line) tipRows.push({ label: o.line.name, color: o.line.color, value: fmtI(Math.round(o.line.vals[si])) });
+        if (o.extraTip) tipRows = tipRows.concat(o.extraTip(si));
+      }
+      var cx = si === null ? 0 : si * slot + slot / 2;
+      return {
+        title: o.title, plotW: PW, plotH: PH, boxH: PH + 30, xTop: PH + 8, rightX: 58 + PW + 6,
+        ticksL: mkTicks(lmax, 5), ticksR: o.line ? mkTicks(rmax, 5) : [],
+        bars: bars, linePath: path, lineColor: o.line ? o.line.color : 'none',
+        dots: pts.map(function (q) { return { left: q[0], top: q[1], color: o.line.color }; }),
+        xLabels: xl, legend: legend,
+        hasTip: si !== null, guideLeft: cx, tipLeft: (cx + 12 + 168 <= PW) ? cx + 12 : Math.max(0, cx - 12 - 168),
+        tipTitle: si !== null ? o.cats[si] : '', tipRows: tipRows
+      };
+    };
+    var WK = '日一二三四五六';
+    var dates = [], wts = [];
+    for (var dd = s.df; dd <= (s.dt || s.df); dd++) { dates.push('2026-11-' + pad(dd) + '(' + WK[(dd - 1) % 7] + ')'); wts.push(1 + ((dd * 37) % 13) / 40); }
+    var wsum = wts.reduce(function (a, b) { return a + b; }, 0);
+    var curRev = wts.map(function (w) { return tot.rev * w / wsum; }), lastRev = curRev.map(function (v, i) { return v * (0.92 + (i % 3) * 0.02); });
+    var prodNames = ['26年豪華雙人套餐', '商品 B', '商品 C', '商品 D', '商品 E', '商品 F', '奶香辣味脆皮炸雞', '商品 H', '商品 I', '商品 J'];
+    var prodRev = [107480, 91860, 78240, 66320, 55710, 50120, 49312, 46030, 44580, 41270];
+    var prodQty = [104, 782, 356, 268, 141, 205, 228, 226, 232, 197];
+    var charts = [
+      makeChart({ id: 'c1', title: '營業額 & 主餐數量(總計)', cats: dates,
+        bars: [{ name: '營業額', color: '#2aa5a1', vals: curRev }],
+        line: { name: '主餐數量', color: '#f0a03c', vals: wts.map(function (w) { return tot.cnt * 0.67 * w / wsum; }) } }),
+      makeChart({ id: 'c2', title: '營業額 & 銷售數量(總計)', cats: prodNames, sparse: true,
+        bars: [{ name: '營業額', color: '#5aa6f2', vals: prodRev.map(function (v) { return v * rr; }) }],
+        line: { name: '銷售數量', color: '#ec5f5c', smooth: true, vals: prodQty.map(function (v) { return v * rc; }) } }),
+      makeChart({ id: 'c3', title: '同期比較(總計)', cats: dates,
+        bars: [{ name: '本期', color: '#2aa5a1', vals: curRev }, { name: '上週同期', color: '#b5b5b5', vals: lastRev }],
+        extraTip: function (i) { var d = lastRev[i] ? (curRev[i] - lastRev[i]) / lastRev[i] * 100 : 0; return [{ label: '成長率', color: 'transparent', value: (d >= 0 ? '+' : '') + d.toFixed(1) + '%' }]; } })
+    ];
+    var periodLabels = { day: '日統計', week: '週統計', month: '月統計' };
+    var titles = { chartMore: '此圖表', metric: '指標（圖表一次選一個）', dim: '分組方式', table: '表格設定', date: '選擇日期', brand: '品牌名稱', query: '查詢範圍', stores: '門市篩選', columns: '指標（表格可多選）', filter: '進階篩選', more: '更多' };
+    var heights = { metric: '78%', date: '82%', brand: 'auto', query: '78%', stores: '78%', columns: '78%' };
+    var codeChk = check(s.showCode);
+    var subFrom = s.sheet || null;
+    var isSub = s.sheet === 'stores' || s.sheet === 'columns' || s.sheet === 'date' || s.sheet === 'brand';
+
+    return {
+      setScroller: function (el) { self.sc = el; },
+      isChart: s.view !== 'table', isTable: s.view === 'table',
+      showFilteredNote: !!(filtered || s.q),
+      kpis: (function () {
+        var chartMode = s.view !== 'table', pinned = ['rev', 'cnt', 'avg'];
+        var keys = (chartMode && pinned.indexOf(s.metric) < 0) ? [s.metric].concat(pinned) : pinned;
+        return keys.map(function (k) {
+          var on = chartMode && s.metric === k;
+          return { label: mLabel[k], value: kval(k, tot), pressed: on ? 'true' : 'false',
+            css: on ? 'border: 1px solid #26979d; box-shadow: inset 0 0 0 1px #26979d; background: #f0f8f8;' : 'border: 1px solid #e3e3e3; background: #ffffff;' + (chartMode ? '' : ' cursor: default;'),
+            pick: function () { if (s.view !== 'table') set({ metric: k }); } };
+        });
+      })(),
+      viewOpts: [['chart', '圖表'], ['table', '表格']].map(function (o, i) {
+        var on = (s.view || 'chart') === o[0];
+        return { label: o[1], pressed: on ? 'true' : 'false', css: seg(on, i), pick: function () { set({ view: o[0] }); } };
+      }),
+      metricLabel: mLabel[s.metric] || '營業額',
+      openMetric: function () { set({ sheet: 'metric' }); },
+      sheetMetric: s.sheet === 'metric',
+      sheetChartMore: s.sheet === 'chartMore',
+      openChartMore: function () { set({ sheet: 'chartMore' }); },
+      chartMetricOpts: metrics.map(function (m) {
+        var k = m.key, on = s.metric === k;
+        return { label: m.label, value: kval(k, tot), sel: on, pressed: on ? 'true' : 'false', css: on ? 'background: #eaf6f7; color: #145f64; font-weight: 500;' : 'background: none; color: #222222;',
+          pick: function () { set({ metric: k, sheet: null }); } };
+      }),
+      setKpiScroller: function (el) { self.kp = el; },
+      rankTitle: '依' + (s.mode === 'group' ? '門市群組' : '門市') + '排名',
+      metricTotal: kval(s.metric, tot),
+      totalCaption: (filtered || s.q ? '篩選後' : '') + (PCTK[s.metric] ? '整體' : '總計'),
+      rankSub: rangeText(s.df, s.dt, ' – ') + ' · ' + (s.brand || '') + ' · ' + (filtered || s.q ? '篩選後 ' : '') + list.length + ' 間門市（示意）',
+      rankRows: (function () {
+        var items;
+        if (s.mode === 'group') {
+          items = groups.map(function (g) { var arr = list.filter(function (x) { return x.group === g; }); return { name: g, o: sum(arr), n: arr.length }; }).filter(function (it) { return it.n > 0; });
+        } else {
+          items = list.map(function (x) { return { name: x.name, o: x }; });
+        }
+        items.forEach(function (it) { it.v = num(s.metric, it.o) || 0; });
+        items.sort(function (p1, p2) { return p2.v - p1.v; });
+        var mx = items.length ? Math.max(items[0].v, 1) : 1;
+        return items.map(function (it, i) { return { rank: i + 1, name: it.name, value: val(s.metric, it.o), pct: Math.max(2, it.v / mx * 100) }; });
+      })(),
+      loading: s.loading, ready: !s.loading,
+      dateText: rangeText(s.df, s.dt, ' – '), brandText: s.brand || '',
+      dDateText: rangeText(D.df, D.dt, ' - '),
+      dBrandText: D.brand || '請選擇品牌', dBrandColor: D.brand ? '#222222' : '#8a8a8a',
+      openDate: function () { set({ sheet: 'date', from: subFrom }); },
+      openBrand: function () { set({ sheet: 'brand', from: subFrom }); },
+      sheetDate: s.sheet === 'date', sheetBrand: s.sheet === 'brand',
+      weekNames: ['日', '一', '二', '三', '四', '五', '六'],
+      calCells: (function () {
+        var out = [];
+        for (var day = 1; day <= 35; day++) {
+          if (day > 30) { out.push({ label: '', disabled: true, aria: '', pressed: 'false', css: 'background: none;', pick: null }); continue; }
+          (function (dd) {
+            var lo = D.df, hi = D.dt || D.df, inR = dd >= lo && dd <= hi, end = dd === lo || dd === hi, fut = dd > 10;
+            var css = fut ? 'background: none; color: #bdbdbd; cursor: default;' : end ? 'background: #ffbb70; color: #222222; font-weight: 700; border-radius: 4px;' : inR ? 'background: #ffe3c2; color: #222222;' : 'background: none; color: #333333;';
+            if (dd === 10 && !end) css += ' box-shadow: inset 0 0 0 1px #c77a12; border-radius: 4px;';
+            out.push({ label: String(dd), disabled: fut, aria: '11 月 ' + dd + ' 日', pressed: end ? 'true' : 'false', css: css,
+              pick: function () { if (D.dt || dd < D.df) setD({ df: dd, dt: null }); else setD({ dt: dd }); } });
+          })(day);
+        }
+        return out;
+      })(),
+      quickDates: [{ label: '今天', pick: function () { setD({ df: 10, dt: 10 }); } },
+                   { label: '昨天', pick: function () { setD({ df: 9, dt: 9 }); } },
+                   { label: '近 7 天', pick: function () { setD({ df: 4, dt: 10 }); } }],
+      brandOpts: ['NU Pasta', '品牌 B', '品牌 C'].map(function (bn) {
+        var on = D.brand === bn;
+        return { label: bn, sel: on, pressed: on ? 'true' : 'false', css: on ? 'background: #eaf6f7; color: #145f64; font-weight: 500;' : 'background: none; color: #222222;',
+          pick: function () { setD({ brand: bn }); set({ d: Object.assign({}, D, { brand: bn }), sheet: s.from || null }); } };
+      }),
+      showInlineForm: !s.searched,
+      showResults: s.searched,
+
+      periodOpts: ['day', 'week', 'month'].map(function (k, i) {
+        return { label: periodLabels[k], pressed: D.period === k ? 'true' : 'false', css: seg(D.period === k, i), pick: function () { setD({ period: k }); } };
+      }),
+      dateOpts: [radio('入帳日期', D.dateType === 'post', function () { setD({ dateType: 'post' }); }),
+                 radio('銷售日期', D.dateType === 'sale', function () { setD({ dateType: 'sale' }); })],
+      dStoreCount: HIDDEN + dSel,
+      storeCount: HIDDEN + countSel(s.stores),
+      periodLabel: periodLabels[s.period],
+      dateTypeLabel: s.dateType === 'post' ? '入帳日期' : '銷售日期',
+      modeOpts: [radio('門市群組', s.mode === 'group', function () { set({ mode: 'group' }); }),
+                 radio('門市名稱', s.mode === 'store', function () { set({ mode: 'store' }); })],
+      showMerge: s.mode === 'store',
+      dimLabel: s.mode === 'group' ? '門市群組' : '門市',
+      openDim: function () { set({ sheet: 'dim' }); },
+      openTable: function () { set({ sheet: 'table' }); },
+      sheetDim: s.sheet === 'dim', sheetTable: s.sheet === 'table',
+      dimOpts: [['store', '門市', '每列一間門市'], ['group', '門市群組', '每列一個群組的加總']].map(function (o) {
+        var on = s.mode === o[0];
+        return { label: o[1], desc: o[2], sel: on, pressed: on ? 'true' : 'false', css: on ? 'background: #eaf6f7; color: #145f64; font-weight: 500;' : 'background: none; color: #222222;',
+          pick: function () { set({ mode: o[0], sheet: null }); } };
+      }),
+      mergeDisabled: s.mode === 'group',
+      mergeOpacity: s.mode === 'group' ? 0.45 : 1,
+      mergeHint: s.mode === 'group' ? '依門市群組分組時不適用' : (s.merge ? '同群組門市集中顯示，並附群組小計' : '每列一間門市，另列門市群組欄'),
+      toggleCode: function () { set({ showCode: !s.showCode }); },
+      codePressed: codeChk.pressed, codeBorder: codeChk.border, codeBg: codeChk.bg,
+      colCount: countCols(s.cols),
+
+      search: function () {
+        if (!D.brand) { set({ sheet: 'brand', from: s.sheet === 'query' ? 'query' : null }); return; }
+        set({ searched: true, loading: true, period: D.period, dateType: D.dateType, stores: D.stores, df: D.df, dt: D.dt || D.df, brand: D.brand, d: null, sheet: null });
+        top();
+        setTimeout(function () { self.setState({ loading: false }); }, 1300);
+      },
+      openQuery: function () { set({ sheet: 'query', d: null }); },
+      openStores: function () { set({ sheet: 'stores', from: subFrom }); },
+      openCols: function () { set({ sheet: 'columns', from: subFrom }); },
+
+      kpiCaption: (filtered || s.q ? '篩選後合計 · ' : '') + '資料更新 2026/11/10 15:20',
+      kRev: fmt(tot.rev), kCnt: fmtI(tot.cnt), kAvg: tot.cnt ? fmt(tot.rev / tot.cnt) : '—',
+
+      q: s.q,
+      onQ: function (e) { set({ q: e.target.value }); },
+      openFilter: function () { set({ sheet: 'filter' }); },
+      openMore: function () { set({ sheet: 'more' }); },
+      closeSheet: function () {
+        // 搜尋後關閉面板＝放棄未搜尋的變更；搜尋前保留表單內容
+        if (s.searched) set({ sheet: null, d: null }); else set({ sheet: null });
+      },
+      sheetBack: function () { set({ sheet: s.from || null }); },
+      showBack: isSub && !!s.from,
+      clearFilter: function () { set({ groups: allGroupsOn, conds: [] }); },
+
+      filtered: filtered,
+      filterBorder: filtered ? TEAL_FILL : '#cfcfcf',
+      filterBg: filtered ? '#eaf6f7' : 'transparent',
+      chips: chips, hasChips: chips.length > 0,
+      rows: rows, noRows: noRows,
+      matchCount: list.length,
+
+      anySheet: !!s.sheet,
+      sheetTitle: titles[s.sheet] || '',
+      sheetH: heights[s.sheet] || 'auto',
+      sheetQuery: s.sheet === 'query', sheetStores: s.sheet === 'stores', sheetCols: s.sheet === 'columns',
+      sheetFilter: s.sheet === 'filter', sheetMore: s.sheet === 'more',
+
+      groupItems: groupItems,
+      condRows: condRows, noConds: s.conds.length === 0,
+      metricOpts: metrics, opOpts: ops,
+      addCond: function () { set({ conds: s.conds.concat([{ id: s.nextId, m: 'rev', op: 'ge', v: '' }]), nextId: s.nextId + 1 }); },
+
+      mergeOpts: [{ label: '合併', pressed: s.merge ? 'true' : 'false', css: seg(s.merge, 0), pick: function () { set({ merge: true }); } },
+                  { label: '不合併', pressed: s.merge ? 'false' : 'true', css: seg(!s.merge, 1), pick: function () { set({ merge: false }); } }],
+
+      storeItems: storeItems,
+      colItems: colItems,
+      presetOpts: presetOpts,
+      charts: charts
+    };
+  }
+}
+
+function lookup(path, scope) {
+  path = path.trim();
+  if (path === 'true') return true; if (path === 'false') return false;
+  if (/^-?\d+(\.\d+)?$/.test(path)) return Number(path);
+  var parts = path.split('.'), v;
+  for (var i = scope.length - 1; i >= 0; i--) { if (scope[i] && parts[0] in scope[i]) { v = scope[i][parts[0]]; break; } }
+  for (var k = 1; k < parts.length && v != null; k++) v = v[parts[k]];
+  return v;
+}
+function interp(str, scope) { return str.replace(/\{\{([^}]+)\}\}/g, function (_, p) { var v = lookup(p, scope); return v == null ? '' : String(v); }); }
+var RAW = /^\s*\{\{([^}]+)\}\}\s*$/;
+var refs = [];
+function build(node, scope) {
+  if (node.nodeType === 3) return [document.createTextNode(interp(node.nodeValue, scope))];
+  if (node.nodeType !== 1) return [];
+  var tag = node.localName;
+  var kids = function (sc) { var out = []; node.childNodes.forEach(function (c) { out = out.concat(build(c, sc)); }); return out; };
+  if (tag === 'sc-if') { return lookup(node.getAttribute('value').replace(/[{}]/g, ''), scope) ? kids(scope) : []; }
+  if (tag === 'sc-for') {
+    var list = lookup(node.getAttribute('list').replace(/[{}]/g, ''), scope) || [], as = node.getAttribute('as'), out = [];
+    list.forEach(function (it, i) { var o = { $index: i }; o[as] = it; out = out.concat(kids(scope.concat([o]))); });
+    return out;
+  }
+  var el = document.createElementNS(node.namespaceURI, tag), val, hasVal = false;
+  Array.prototype.forEach.call(node.attributes, function (a) {
+    var n = a.name, raw = RAW.exec(a.value);
+    if (n.indexOf('hint-') === 0) return;
+    var v = raw ? lookup(raw[1], scope) : interp(a.value, scope);
+    if (n.length > 2 && n.indexOf('on') === 0) {
+      if (typeof v === 'function') {
+        var ev = n.slice(2); if (ev === 'change') ev = tag === 'select' ? 'change' : 'input';
+        el.addEventListener(ev, v);
+      }
+      return;
+    }
+    if (n === 'ref') { if (typeof v === 'function') refs.push([v, el]); return; }
+    if (n === 'value') { val = v; hasVal = true; return; }
+    if (n === 'disabled') { if (v === true || v === 'true') el.setAttribute('disabled', ''); return; }
+    if (n === 'data-opts') {
+      (lookup(a.value, scope) || []).forEach(function (o) { var op = document.createElement('option'); op.value = o.key; op.textContent = o.label; el.appendChild(op); });
+      return;
+    }
+    el.setAttribute(n, v == null ? '' : String(v));
+  });
+  kids(scope).forEach(function (c) { el.appendChild(c); });
+  if (hasVal) el.value = val == null ? '' : val;
+  return [el];
+}
+var comp = null, tplRoot = document.getElementById('tpl').content;
+function mount(start) { comp = new Component({ start: start }); render(); }
+function render() {
+  var keep = comp.sc ? comp.sc.scrollTop : 0;
+  refs = [];
+  var scope = [comp.renderVals()];
+  var phone = document.getElementById('phone');
+  var nodes = []; tplRoot.childNodes.forEach(function (c) { nodes = nodes.concat(build(c, scope)); });
+  phone.replaceChildren.apply(phone, nodes);
+  refs.forEach(function (r) { r[0](r[1]); });
+  if (comp.sc) comp.sc.scrollTop = keep;
+}
+document.querySelectorAll('#jumps button').forEach(function (b) { b.addEventListener('click', function () { mount(b.getAttribute('data-start')); }); });
+function fit() {
+  var ph = document.getElementById('phone'), wrap = document.getElementById('phoneWrap');
+  if (window.innerWidth <= 860) {
+    var k = window.innerWidth / 390;
+    ph.style.transform = 'scale(' + k + ')'; wrap.style.width = window.innerWidth + 'px'; wrap.style.height = (844 * k) + 'px';
+  } else {
+    var k2 = Math.min(1, (window.innerHeight - 64) / 844);
+    ph.style.transform = 'scale(' + k2 + ')'; wrap.style.width = (390 * k2) + 'px'; wrap.style.height = (844 * k2) + 'px';
+  }
+}
+window.addEventListener('resize', fit); fit();
+mount('query');
+</script>
+</body>
+</html>
