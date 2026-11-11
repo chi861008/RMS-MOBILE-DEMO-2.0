@@ -32,7 +32,7 @@ html, body { margin: 0; min-height: 100%; background: #ecebe8; font-family: 'Not
   <div id="side">
     <div class="kicker">專加科技 RMS · 手機版改版原型</div>
     <h1>門市營收一覽表</h1>
-    <p>可直接點擊操作的互動原型：搜尋後條件收合並固定；圖表與表格共用同一列控制「[指標] [分組] [圖表｜表格]」；進階篩選（在結果中篩選）；點摘要修改條件。</p>
+    <p>可直接點擊操作的互動原型：搜尋後條件收合並固定；圖表與表格共用同一列控制「[指標] [分組] [圖表｜表格]」；進階篩選（在結果中篩選）；點摘要修改查詢範圍。</p>
     <a class="btn" href="demo.mp4" target="_blank" rel="noopener">觀看示範影片</a>
     <h2>跳到指定畫面</h2>
     <div id="jumps">
@@ -606,6 +606,7 @@ html, body { margin: 0; min-height: 100%; background: #ecebe8; font-family: 'Not
 class DCLogic {
   constructor(props) { this.props = props; this.state = undefined; }
   setState(p) { this.state = Object.assign({}, this.state || {}, p); render(); }
+}
 
 class Component extends DCLogic {
   S() {
